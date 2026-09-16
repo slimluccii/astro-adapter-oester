@@ -2,11 +2,6 @@
   "name": "astro-adapter-oester",
   "description": "Astro adapter that writes the Oester build output",
   "version": "0.0.0",
-  "keywords": [
-    "astro-adapter",
-    "astro",
-    "oester"
-  ],
   "license": "MIT",
   "repository": {
     "type": "git",

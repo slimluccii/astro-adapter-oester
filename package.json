@@ -1,0 +1,52 @@
+{
+  "name": "astro-adapter-oester",
+  "description": "Astro adapter that writes the Oester build output",
+  "version": "0.0.0",
+  "keywords": [
+    "astro-adapter",
+    "astro",
+    "oester"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/slimluccii/astro-adapter-oester.git"
+  },
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "!dist/**/*.test.*"
+  ],
+  "packageManager": "pnpm@11.21.0",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "build": "rm -rf dist && tsc -p tsconfig.build.json",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "lint": "biome check .",
+    "format": "biome format --write .",
+    "changeset": "changeset"
+  },
+  "dependencies": {
+    "esbuild": "0.28.2"
+  },
+  "peerDependencies": {
+    "astro": "^7.0.0"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.5.12",
+    "@changesets/cli": "3.0.3",
+    "@types/node": "24.10.9",
+    "astro": "7.2.2",
+    "typescript": "7.0.2",
+    "vitest": "5.0.0"
+  }
+}

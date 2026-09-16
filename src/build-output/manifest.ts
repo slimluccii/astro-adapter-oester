@@ -42,6 +42,7 @@ export interface Manifest {
   server?: Server;
   notFound?: string;
   fallback?: string;
+  base?: string;
 }
 
 export type Validation = { ok: true; manifest: Manifest } | { ok: false; errors: string[] };
@@ -54,6 +55,17 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function isPath(value: unknown): value is string {
   return typeof value === "string" && value.startsWith("/");
+}
+
+// "/docs" and "/docs/" are the same base, and "/" is none at all.
+function normalizeBase(value: unknown): string | undefined {
+  if (value === "/") return value;
+  if (typeof value !== "string" || !value.startsWith("/")) return undefined;
+  const segments = value.slice(1).replace(/\/$/, "").split("/");
+  if (segments.some((segment) => segment === "" || segment === "." || segment === "..")) {
+    return undefined;
+  }
+  return `/${segments.join("/")}/`;
 }
 
 function isRelativeFile(value: unknown): value is string {
@@ -214,6 +226,13 @@ export function validateManifest(json: unknown): Validation {
     else notFound = json.notFound;
   }
 
+  let base: string | undefined;
+  if (version === 2 && json.base !== undefined) {
+    const normalized = normalizeBase(json.base);
+    if (normalized === undefined) errors.push("base must be a path such as /docs/");
+    else if (normalized !== "/") base = normalized;
+  }
+
   if (errors.length > 0) return { ok: false, errors };
   return {
     ok: true,
@@ -227,6 +246,7 @@ export function validateManifest(json: unknown): Validation {
       ...(server ? { server } : {}),
       ...(notFound ? { notFound } : {}),
       ...(fallback ? { fallback } : {}),
+      ...(base ? { base } : {}),
     },
   };
 }

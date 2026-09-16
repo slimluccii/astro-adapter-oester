@@ -195,6 +195,45 @@ describe("version 2", () => {
   });
 });
 
+describe("base", () => {
+  const staticV2 = { ...staticSite, version: 2, framework: { name: "wald" } };
+  const baseOf = (base: unknown) => {
+    const result = validateManifest({ ...staticV2, base });
+    return result.ok ? result.manifest.base : result.errors;
+  };
+
+  it("reads the path a build is served from, always with a trailing slash", () => {
+    expect(baseOf("/docs/")).toBe("/docs/");
+    expect(baseOf("/docs")).toBe("/docs/");
+    expect(baseOf("/guides/v2")).toBe("/guides/v2/");
+  });
+
+  it("leaves the base out for a build served from the root", () => {
+    expect(baseOf("/")).toBeUndefined();
+    expect(baseOf(undefined)).toBeUndefined();
+  });
+
+  it("rejects a base that is not a path under the hostname", () => {
+    for (const base of [
+      "docs/",
+      "./",
+      "",
+      "https://cdn.example.com/site/",
+      "/../",
+      "/./",
+      "/docs//v2/",
+      5,
+    ]) {
+      expect(errorsOf({ ...staticV2, base })).toContain("base must be a path such as /docs/");
+    }
+  });
+
+  it("ignores a base on a version 1 manifest, as it does the not-found page", () => {
+    const result = validateManifest({ ...staticSite, base: "/docs/" });
+    expect(result.ok && result.manifest.base).toBeUndefined();
+  });
+});
+
 describe("fallback for single page apps", () => {
   it("accepts a relative fallback file and rejects an escaping one", () => {
     expect(validateManifest({ ...staticSite, fallback: "index.html" }).ok).toBe(true);

@@ -5,14 +5,10 @@ The [Astro](https://astro.build) adapter for Oester. It turns an Astro build int
 ## Install
 
 ```sh
-npx astro add astro-adapter-oester
-```
-
-Or by hand:
-
-```sh
 npm install astro-adapter-oester
 ```
+
+Then set it as the adapter; `astro add` installs the package but only configures Astro's own adapters.
 
 ```js
 // astro.config.mjs

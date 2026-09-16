@@ -22,6 +22,8 @@ export default defineConfig({
 
 Add `.oester` to your `.gitignore`.
 
+A `base` in your Astro config works as it does on other hosts: Oester serves the site under that path and redirects the root of the domain there. Write redirect destinations with the base in them, as Astro expects.
+
 ## Options
 
 `imageService` decides what happens to Astro's image service, because sharp cannot run on the Oester runtime:

@@ -121,3 +121,43 @@ test("prerenderedFile follows the build format", () => {
   expect(prerenderedFile("/404.html", "page", "directory")).toBe("404.html");
   expect(prerenderedFile("/robots.txt", "endpoint", "directory")).toBe("robots.txt");
 });
+
+test("tells Oester the base, and keeps routes and redirects as Astro wrote them", () => {
+  const manifest = buildManifest({
+    ...baseInput,
+    base: "/docs",
+    routes: [
+      {
+        type: "page",
+        pattern: "/",
+        patternRegex: { source: "^\\/$" },
+        isPrerendered: true,
+        pathname: "/",
+      },
+      {
+        type: "endpoint",
+        pattern: "/api/hello",
+        patternRegex: { source: "^\\/api\\/hello\\/?$" },
+        isPrerendered: false,
+      },
+      {
+        type: "redirect",
+        pattern: "/old",
+        patternRegex: { source: "^\\/old$" },
+        isPrerendered: false,
+        redirect: "/docs/new",
+      },
+    ],
+  });
+  expect(manifest.base).toBe("/docs");
+  expect(validateManifest(manifest)).toMatchObject({ ok: true, manifest: { base: "/docs/" } });
+  expect(manifest.routes).toEqual([
+    { pattern: "/", type: "prerendered", file: "index.html" },
+    { pattern: "/api/hello", type: "server", regex: "^\\/api\\/hello\\/?$" },
+  ]);
+  expect(manifest.redirects).toEqual([{ from: "/old", to: "/docs/new", status: 301 }]);
+});
+
+test("leaves the base out for a site at the root", () => {
+  expect(buildManifest({ ...baseInput, routes, base: "/" })).not.toHaveProperty("base");
+});

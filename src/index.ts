@@ -115,6 +115,7 @@ export default function createIntegration(options: Options = {}): AstroIntegrati
           assetsDir: resolvedConfig.build.assets,
           routes: resolvedRoutes,
           staticHeaders,
+          base: resolvedConfig.base,
         });
         const validation = validateManifest(manifest);
         if (!validation.ok) throw new Error(`oester manifest: ${validation.errors.join("; ")}`);

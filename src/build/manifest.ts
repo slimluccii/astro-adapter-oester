@@ -23,6 +23,7 @@ export interface ManifestInput {
   assetsDir: string;
   routes: RouteInfo[];
   staticHeaders: Record<string, Record<string, string>>;
+  base?: string;
 }
 
 function redirectStatus(status: number): Redirect["status"] {
@@ -86,6 +87,7 @@ export function buildManifest(input: ManifestInput): Manifest {
     redirects,
     headers,
     ...(hasServer ? { server: { entry: DEFAULT_SERVER_ENTRY, format: BUNDLE_FORMAT } } : {}),
+    ...(input.base && input.base !== "/" ? { base: input.base } : {}),
   };
 }
 

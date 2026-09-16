@@ -8,7 +8,7 @@ The [Astro](https://astro.build) adapter for Oester. It turns an Astro build int
 npm install astro-adapter-oester
 ```
 
-Then set it as the adapter; `astro add` installs the package but only configures Astro's own adapters.
+Then set it as the adapter; `astro add` does not configure it for you.
 
 ```js
 // astro.config.mjs

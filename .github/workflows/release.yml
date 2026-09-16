@@ -72,6 +72,9 @@ jobs:
           package-manager-cache: false
       - run: pnpm install --frozen-lockfile
       - uses: changesets/action/version@v2
+        with:
+          commit-message: "chore: version packages"
+          pr-title: "chore: version packages"
 
   pack:
     if: needs.select-mode.outputs.mode == 'publish'

@@ -37,6 +37,12 @@ A `base` in your Astro config works as it does on other hosts: Oester serves the
 adapter: oester({ imageService: "bunny" }),
 ```
 
+## Middleware
+
+Oester calls the server bundle only for the paths the manifest routes to the server, so at request time your middleware runs for those paths and no others. A prerendered page, a static file and a redirect from the manifest are answered by the platform, and middleware never sees them.
+
+So a decision that depends on the request needs a route to be made on. For the root of a site that means `src/pages/index.astro` with `export const prerender = false`, even when the page itself renders nothing and middleware answers instead.
+
 ## Versions
 
 Two dist-tags are published:

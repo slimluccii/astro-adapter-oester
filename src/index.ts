@@ -27,10 +27,54 @@ export default function createIntegration(options: Options = {}): AstroIntegrati
   let resolvedRoutes: IntegrationResolvedRoute[] = [];
   const staticHeaders: Record<string, Record<string, string>> = {};
 
+  // Astro runs this hook after the hooks of the integrations the site lists,
+  // so the output holds what a sitemap or a search index wrote last.
+  const output: AstroIntegration = {
+    name: "astro-adapter-oester:output",
+    hooks: {
+      "astro:build:done": async ({ logger }) => {
+        const root = fileURLToPath(resolvedConfig.root);
+        const clientDir = fileURLToPath(resolvedConfig.build.client);
+        const serverDir = fileURLToPath(resolvedConfig.build.server);
+        const outputDir = join(root, OUTPUT_DIRECTORY);
+
+        // In compile mode prerendering already ran with sharp; leaving the
+        // lazy `import("sharp")` unresolved keeps the native module out of
+        // the deployed bundle, and nothing prerendered ever executes it.
+        const external = options.imageService === "compile" ? ["sharp"] : [];
+        const bundle = await bundleServer(
+          join(serverDir, resolvedConfig.build.serverEntry),
+          logger,
+          external,
+        );
+
+        const manifest = buildManifest({
+          buildFormat: resolvedConfig.build.format,
+          assetsDir: resolvedConfig.build.assets,
+          routes: resolvedRoutes,
+          staticHeaders,
+          base: resolvedConfig.base,
+        });
+        const validation = validateManifest(manifest);
+        if (!validation.ok) throw new Error(`oester manifest: ${validation.errors.join("; ")}`);
+
+        await rm(outputDir, { recursive: true, force: true });
+        await mkdir(dirname(join(outputDir, DEFAULT_SERVER_ENTRY)), { recursive: true });
+        await cp(clientDir, join(outputDir, CLIENT_DIRECTORY), { recursive: true });
+        await writeFile(join(outputDir, DEFAULT_SERVER_ENTRY), bundle);
+        await writeFile(join(outputDir, MANIFEST_FILE), `${JSON.stringify(manifest, null, 2)}\n`);
+        logger.info(
+          `Wrote ${OUTPUT_DIRECTORY} (bundle ${Math.round(bundle.byteLength / 1024)}KB, ${manifest.routes.length} routes)`,
+        );
+      },
+    },
+  };
+
   return {
     name: "astro-adapter-oester",
     hooks: {
       "astro:config:setup": ({ updateConfig, config, command }) => {
+        updateConfig({ integrations: [output] });
         const imageService = resolveImageService(
           options.imageService,
           config,
@@ -93,41 +137,6 @@ export default function createIntegration(options: Options = {}): AstroIntegrati
             staticHeaders[pathname] = entries;
           }
         }
-      },
-      "astro:build:done": async ({ logger }) => {
-        const root = fileURLToPath(resolvedConfig.root);
-        const clientDir = fileURLToPath(resolvedConfig.build.client);
-        const serverDir = fileURLToPath(resolvedConfig.build.server);
-        const outputDir = join(root, OUTPUT_DIRECTORY);
-
-        // In compile mode prerendering already ran with sharp; leaving the
-        // lazy `import("sharp")` unresolved keeps the native module out of
-        // the deployed bundle, and nothing prerendered ever executes it.
-        const external = options.imageService === "compile" ? ["sharp"] : [];
-        const bundle = await bundleServer(
-          join(serverDir, resolvedConfig.build.serverEntry),
-          logger,
-          external,
-        );
-
-        const manifest = buildManifest({
-          buildFormat: resolvedConfig.build.format,
-          assetsDir: resolvedConfig.build.assets,
-          routes: resolvedRoutes,
-          staticHeaders,
-          base: resolvedConfig.base,
-        });
-        const validation = validateManifest(manifest);
-        if (!validation.ok) throw new Error(`oester manifest: ${validation.errors.join("; ")}`);
-
-        await rm(outputDir, { recursive: true, force: true });
-        await mkdir(dirname(join(outputDir, DEFAULT_SERVER_ENTRY)), { recursive: true });
-        await cp(clientDir, join(outputDir, CLIENT_DIRECTORY), { recursive: true });
-        await writeFile(join(outputDir, DEFAULT_SERVER_ENTRY), bundle);
-        await writeFile(join(outputDir, MANIFEST_FILE), `${JSON.stringify(manifest, null, 2)}\n`);
-        logger.info(
-          `Wrote ${OUTPUT_DIRECTORY} (bundle ${Math.round(bundle.byteLength / 1024)}KB, ${manifest.routes.length} routes)`,
-        );
       },
     },
   };
